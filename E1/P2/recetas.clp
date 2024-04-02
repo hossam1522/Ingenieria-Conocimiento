@@ -29,14 +29,14 @@
 (defrule carga_recetas
 (declare (salience 1000))
 =>
-(load-facts "recetas.txt")
+(load-facts "recetas-todo.txt")
 )
 
 
 (defrule guarda_recetas
 (declare (salience -1000))
 =>
-;(save-facts "recetas.txt")
+;(save-facts "resultados.txt")
 )
 
 ;;; Mostrar por pantalla las recetas
@@ -144,7 +144,7 @@
 ;; Sustituye la subcadena por "" en la cadena y si el resultado es distinto de la cadena original,
 ;; entonces la subcadena está dentro de la cadena
 (deffunction palabra-esta-dentro (?subcadena ?cadena)
-(if (<= (str-length ?subcadena) 2)
+(if (or(<= (str-length ?subcadena) 2) (numberp ?subcadena) (numberp ?cadena))
   then (return FALSE))
 (bind ?reemplazo (str-replace ?cadena ?subcadena ""))
 (if (neq ?reemplazo ?cadena)
