@@ -347,7 +347,7 @@
 ; Comprobamos que azucar o chocolate estén en la lista de ingredientes
 (bind ?resultado1 (palabra-esta-dentro-lista azucar ?ingredientes))
 (bind ?resultado2 (palabra-esta-dentro-lista chocolate ?ingredientes))
-(if (and (<= ?t 30) (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0)))
+(if (and (<= ?t 45) (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0)))
     then
     (assert (plato-asociado ?nombre postre))
     (assert (plato-asociado ?nombre desayuno_merienda))
