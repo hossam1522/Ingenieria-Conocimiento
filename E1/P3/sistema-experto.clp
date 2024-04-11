@@ -11,72 +11,99 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmodule PREGUNTAS (export deftemplate informacion))
+(defmodule PREGUNTAS (export deftemplate ?ALL))
 
-(deftemplate PREGUNTAS::informacion
-  (multislot tipo-comida)
-  (multislot alimentos-disponibles)
-  (multislot alimentos-adquiribles)
-  (slot para-cuando)
-  (slot numero-comensales)
-  (slot dificultad)
-  (slot duracion)
-  (slot propiedades-nutricionales)
+; Para eliminar los espacios en blanco alrededor de una cadena
+(deffunction PREGUNTAS::str-trim (?str)
+    (bind ?str (str-replace "^\s+" "" ?str))
+    (bind ?str (str-replace "\s+$" "" ?str))
+    ?str
 )
 
-(deffunction PREGUNTAS::modificar-informacion (?slot ?valor)
-  (bind ?slot (lowcase ?slot))
-  (assert (informacion (?slot ?valor)))
+; Para leer una cadena de entrada y convertirla en un vector de palabras
+(deffunction PREGUNTAS::input-vector (?prompt)
+  (printout t ?prompt crlf)
+  (bind ?input (readline))
+  (bind ?tokens (explode$ ?input))
+  (bind ?vector (create$))
+  (foreach ?t ?tokens
+    (bind ?token (str-trim ?t))
+    (if (not (eq ?token ""))
+      then
+      (bind ?vector (insert$ ?vector 1 ?token))
+    )
+  )
+  ?vector
 )
 
+(defrule PREGUNTAS::pregunta-inicial
+=>
+(printout t "Hola! Soy un sistema experto que te ayudara a encontrar la receta perfecta para ti." crlf)
+(printout t "Para ello, necesito hacerte unas preguntas. Si no quieres responder a alguna, escribe '-1'" crlf crlf)
+)
 
 (defrule PREGUNTAS::preguntar-numero-comensales
 =>
-(printout t "¿Para cuantas personas es la receta?" crlf)
+(printout t "Para cuantas personas es la receta?" crlf)
 (bind ?numero-comensales (read))
-(modificar-informacion "numero-comensales" ?numero-comensales)
+(if (not (eq ?numero-comensales -1))
+  then
+  (assert (numero-comensales ?numero-comensales)))
 )
 
 (defrule PREGUNTAS::preguntar-dificultad
 =>
-(printout t "¿Que dificultad quieres que tenga la receta? (alta, media, baja, muy_baja)" crlf)
+(printout t "Que dificultad quieres que tenga la receta? (alta, media, baja, muy_baja)" crlf)
 (bind ?dificultad (read))
-(modificar-informacion "dificultad" ?dificultad)
+(if (not (eq ?dificultad -1))
+  then
+  (assert (dificultad ?dificultad)))
 )
 
 (defrule PREGUNTAS::preguntar-duracion
 =>
-(printout t "¿Cuanto tiempo quieres que dure la receta? (en minutos)" crlf)
+(printout t "Cuanto tiempo quieres que dure la receta como mucho? (en minutos)" crlf)
 (bind ?duracion (read))
-(modificar-informacion "duracion" ?duracion)
+(if (not (eq ?duracion -1))
+  then
+  (assert (duracion ?duracion)))
 )
 
 (defrule PREGUNTAS::preguntar-tipo-comida
 =>
-(printout t "¿Que tipo de comida te apetece? (vegetariana, vegana, sin_gluten, picante, sin_lactosa, de_dieta)" crlf)
-(bind ?tipo-comida (read)
-(modificar-informacion "tipo-comida" ?tipo-comida))
+(bind ?tipo-comida (input-vector "Que tipo de comida quieres? (vegana, vegetariana, sin_gluten, picante, sin_lactosa, de_dieta)"))
+(if (neq (length$ ?tipo-comida) 0)
+  then
+  (if (not (eq (nth$ 1 ?tipo-comida) -1))
+    then
+    (foreach ?tipo ?tipo-comida
+      (assert (tipo-comida ?tipo))
+    )
+  )
+)
 )
 
 (defrule PREGUNTAS::preguntar-alimentos-disponibles
 =>
-(printout t "¿Que alimentos tienes disponibles? (aproximado)" crlf)
-(bind ?alimentos-disponibles (read))
-(modificar-informacion "alimentos-disponibles" $?alimentos-disponibles)
+(bind ?alimentos (input-vector "Que alimentos tienes disponibles o puedes conseguir? (separados por espacios)"))
+(if (neq (length$ ?alimentos) 0)
+  then
+  (if (not (eq (nth$ 1 ?alimentos) -1))
+    then
+    (foreach ?alimento ?alimentos
+      (assert (alimento-disponible ?alimento))
+    )
+  )
 )
-
-(defrule PREGUNTAS::preguntar-alimentos-adquiribles
-=>
-(printout t "¿Que alimentos puedes adquirir? (aproximado)" crlf)
-(bind ?alimentos-adquiribles (read))
-(modificar-informacion "alimentos-adquiribles" $?alimentos-adquiribles)
 )
 
 (defrule PREGUNTAS::preguntar-para-cuando
 =>
-(printout t "¿Para que comida del día quieres la receta? (entrante, primer_plato, plato_principal, postre, desayuno_merienda, acompanamiento)" crlf)
+(printout t "Para que comida del dia quieres la receta? (entrante, primer_plato, plato_principal, postre, desayuno_merienda, acompanamiento)" crlf)
 (bind ?para-cuando (read))
-(modificar-informacion "para-cuando" ?para-cuando)
+(if (not (eq ?para-cuando -1))
+  then
+  (assert (para-cuando ?para-cuando)))
 )
 
 
@@ -93,7 +120,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmodule PROPIEDADES-RECETAS (export deftemplate propiedad_receta))
+(defmodule PROPIEDADES-RECETAS (export deftemplate receta propiedad_receta plato-asociado) (import PREGUNTAS deftemplate ?ALL))
 
 (deftemplate PROPIEDADES-RECETAS::receta
 (slot nombre)   ; necesario
@@ -117,6 +144,12 @@
 (slot Colesterol) ; calculado necesario
 )
 
+;;; Función para convertir tiempo a minutos, reemplazando la "m" por "" y convirtiendo a número
+(deffunction PROPIEDADES-RECETAS::convertir-a-minutos (?tiempo)
+  (bind ?resultado (str-replace ?tiempo "m" ""))
+  (return (string-to-field ?resultado))
+)
+
 ;;; Guardar todas las recetas en la base de hechos
 (defrule PROPIEDADES-RECETAS::carga_recetas
 (declare (salience 1000))
@@ -124,10 +157,66 @@
 (load-facts "recetas.txt")
 )
 
-(defrule PROPIEDADES-RECETAS::deducir_receta
-(receta (nombre ?x))
+;;; Meter algunos valores por defecto si el usuario no los ha querido introducir
+(defrule PROPIEDADES-RECETAS::valor_defecto_duracion
+(not (duracion ?))
 =>
-(assert (es_receta ?x))
+; 180 porque el tiempo introducido es el máximo y todas las recetas tienen un tiempo máximo de 3 horas
+; así que podemos tener todas las recetas posibles en cuenta
+(assert (duracion 180))  
+)
+
+;;; Filtrar las recetas de las cuales vamos a calcular sus propiedades
+(defrule PROPIEDADES-RECETAS::deducir_receta_todo
+(numero-comensales ?z)
+(duracion ?tiempo)
+(dificultad ?dificultad)
+(receta (nombre ?x) (numero_personas ?z) (duracion ?tiempo_receta) (dificultad ?dificultad))
+=>
+(bind ?t (convertir-a-minutos ?tiempo_receta))
+(if (<= ?t ?tiempo)
+  then
+  (assert (es_receta ?x)))
+)
+
+;;; Si no se introduce el número de comensales, se asume que se quiere una receta para cualquier número de comensales
+(defrule PROPIEDADES-RECETAS::deducir_receta_sin_numero_comensales
+(duracion ?tiempo)
+(dificultad ?dificultad)
+(not (numero-comensales ?))
+(receta (nombre ?x) (duracion ?tiempo_receta) (dificultad ?dificultad))
+=>
+(bind ?t (convertir-a-minutos ?tiempo_receta))
+(if (<= ?t ?tiempo)
+  then
+  (assert (es_receta ?x)))
+)
+
+;;; Si no se introduce la dificultad, se asume que se quiere una receta de cualquier dificultad
+(defrule PROPIEDADES-RECETAS::deducir_receta_sin_dificultad
+(numero-comensales ?z)
+(duracion ?tiempo)
+(not (dificultad ?))
+(receta (nombre ?x) (numero_personas ?z) (duracion ?tiempo_receta))
+=>
+(bind ?t (convertir-a-minutos ?tiempo_receta))
+(if (<= ?t ?tiempo)
+  then
+  (assert (es_receta ?x)))
+)
+
+;;; Si no se introduce ni el número de comensales, ni la dificultad, se asume que se quiere una receta de cualquier 
+;;; dificultad y para cualquier número de comensales
+(defrule PROPIEDADES-RECETAS::deducir_receta_sin_numero_comensales_ni_dificultad
+(duracion ?tiempo)
+(not (numero-comensales ?))
+(not (dificultad ?))
+(receta (nombre ?x) (duracion ?tiempo_receta))
+=>
+(bind ?t (convertir-a-minutos ?tiempo_receta))
+(if (<= ?t ?tiempo)
+  then
+  (assert (es_receta ?x)))
 )
 
 ; Obtener la receta de la que se quiere obtener informacion
@@ -350,12 +439,6 @@
 )
 
 ;;;Añadir reglas paraa deducir el tipo de plato asociado a una receta
-
-;;; Función para convertir tiempo a minutos, reemplazando la "m" por "" y convirtiendo a número
-(deffunction PROPIEDADES-RECETAS::convertir-a-minutos (?tiempo)
-  (bind ?resultado (str-replace ?tiempo "m" ""))
-  (return (string-to-field ?resultado))
-)
 
 ;;; Definir los tipos de platos a partir de la duración y los posibles ingredientes
 ; Primer plato o plato principal
@@ -728,11 +811,77 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Modulo de obtención de recetas compatibles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmodule RECETAS-COMPATIBLES (import PROPIEDADES-RECETAS ?ALL) (import PREGUNTAS ?ALL))
+
+;; Definir una función para comprobar si una palabra esta dentro de otra
+;; Sustituye la subcadena por "" en la cadena y si el resultado es distinto de la cadena original,
+;; entonces la subcadena esta dentro de la cadena
+(deffunction RECETAS-COMPATIBLES::palabra-esta-dentro (?subcadena ?cadena)
+(if (or(<= (str-length ?subcadena) 2) (numberp ?subcadena) (numberp ?cadena))
+  then (return FALSE))
+(bind ?reemplazo (str-replace ?cadena ?subcadena ""))
+(if (neq ?reemplazo ?cadena)
+  then (return TRUE)
+  else (return FALSE))
+)
+
+;; Definir una función para dividir un string en palabras individuales
+(deffunction RECETAS-COMPATIBLES::dividir-string (?cadena)
+(bind ?palabras (explode$ ?cadena))
+(return ?palabras))
+
+;; Definir una función para dividir una palabra en subpalabras
+(deffunction RECETAS-COMPATIBLES::dividir-palabra (?palabra)
+(bind ?palabra-separada (str-replace ?palabra "_" " "))
+(bind ?palabras (dividir-string ?palabra-separada))
+(return ?palabras)
+)
+
+;; Definir una función que te indique si una palabra esta dentro de una lista de palabras 
+;; Se usara la función palabra-esta-dentro
+;; Devuelve una lista "resultado" con las palabras que estan dentro de la lista que se pasa como argumento
+(deffunction RECETAS-COMPATIBLES::palabra-esta-dentro-lista (?palabr ?lista)
+(bind ?resultado (create$))
+(bind ?palabra (str-cat ?palabr))
+(loop-for-count (?i (length$ ?lista))
+  (bind ?x (nth$ ?i ?lista))
+  ; Dividimos la palabras por si la palabra es compuesta
+  (bind ?palabras (dividir-palabra ?palabra))
+  ; Comprobamos si la palabra esta dentro de la lista de palabras
+  (loop-for-count (?j (length$ ?palabras))
+    (bind ?y (nth$ ?j ?palabras))
+    (if (palabra-esta-dentro ?y ?x)
+      ; Añadimos la palabra a la lista de resultados en la última posición
+      then (bind ?resultado (insert$ ?resultado (+ (length$ ?resultado) 1) ?x)))
+  )
+)
+(return $?resultado)
+)
+
+;;; Filtrar las recetas según las propiedades indicadas por el usuario
+(defrule RECETAS-COMPATIBLES::filtrar_recetas
+(propiedad_receta ?propiedad ?receta)
+=>
+(if )
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; FIN Modulo de obtención de recetas compatibles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Modulo de prueba
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmodule PRUEBA (import PROPIEDADES-RECETAS ?ALL))
+(defmodule PRUEBA (import PROPIEDADES-RECETAS ?ALL) (import PREGUNTAS ?ALL))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
