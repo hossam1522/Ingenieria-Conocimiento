@@ -29,7 +29,7 @@
 (defrule carga_recetas
 (declare (salience 1000))
 =>
-(load-facts "recetas-todo.txt")
+(load-facts "recetas.txt")
 )
 
 
@@ -64,8 +64,8 @@
 (defrule preguntar_receta
 =>
 (printout t crlf "")
-(printout t crlf "Indica la receta de la cual se quiere obtener informacion (entre comillas): " )
-(assert (nom_receta_normal (read)))
+(printout t crlf "Indica la receta de la cual se quiere obtener informacion: " )
+(assert (nom_receta_normal (readline)))
 )
 
 ;;;;; EJERCICIO PARTE 1: Añadir reglas para deducir cual o cuales son los ingredientes relevantes de una receta
@@ -101,6 +101,7 @@
 ;;; Lista de tipos de alimentos a partir de la lista de ingredientes relevantes
 (deffacts tipos_alimentos
 (es_un_tipo_de pollo carne)
+(es_un_tipo_de pechuga_de_pollo carne)
 (es_un_tipo_de ternera carne)
 (es_un_tipo_de cerdo carne)
 (es_un_tipo_de cordero carne)
@@ -119,6 +120,13 @@
 (es_un_tipo_de filete carne)
 (es_un_tipo_de solomillo carne)
 (es_un_tipo_de panceta carne)
+(es_un_tipo_de costilla carne)
+(es_un_tipo_de lomo carne)
+(es_un_tipo_de albondigas carne)
+(es_un_tipo_de empanada carne)
+(es_un_tipo_de kebab carne)
+(es_un_tipo_de escalope carne)
+(es_un_tipo_de nuggets carne)
 (es_un_tipo_de salmon pescado)
 (es_un_tipo_de merluza pescado)
 (es_un_tipo_de bacalao pescado)
@@ -341,13 +349,12 @@
 ; Consideraré que postre y desayuno/merienda son lo mismo
 (defrule deducir_tipo_plato_postre_desayuno_merienda
 (nom_receta_normal ?nombre)
-(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes) (duracion ?tiempo))
+(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes))
 =>
-(bind ?t (convertir-a-minutos ?tiempo))
 ; Comprobamos que azucar o chocolate estén en la lista de ingredientes
 (bind ?resultado1 (palabra-esta-dentro-lista azucar ?ingredientes))
 (bind ?resultado2 (palabra-esta-dentro-lista chocolate ?ingredientes))
-(if (and (<= ?t 45) (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0)))
+(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
     then
     (assert (plato-asociado ?nombre postre))
     (assert (plato-asociado ?nombre desayuno_merienda))

@@ -183,7 +183,7 @@
 
 ;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
 ;;; En este caso, comprueba si cada palabra del nombre de la receta está dentro del nombre de los ingredientes relevantes
-(defrule deducir_ingredientes_relevantes_nombre_compuesto
+(defrule deducir_ingredientes_relevantes_nombre_compuesto1
 (nom_receta_normal ?a)
 (nom_receta ?x)
 (receta (nombre ?a) (ingredientes $?ingredientes))
@@ -208,7 +208,7 @@
 
 ;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
 ;;; En este caso, hacemos lo contrario, comprobamos si el nombre de los ingredientes está dentro del nombre de la receta
-(defrule deducir_ingredientes_relevantes_nombre_compuesto
+(defrule deducir_ingredientes_relevantes_nombre_compuesto2
 (nom_receta_normal ?a)
 (nom_receta ?x)
 (receta (nombre ?a) (ingredientes $?ingredientes))
