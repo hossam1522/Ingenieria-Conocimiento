@@ -94,14 +94,14 @@
 (printout t crlf)
 )
 
-(defrule PREGUNTAS::preguntar-tipo-comida
+(defrule PREGUNTAS::preguntar-tipo_comida
 =>
-(bind ?tipo-comida (input-vector "Alguna preferencia alimenticia? Indicalo para que pueda ayudarte de la mejor forma posible (vegana, vegetariana, sin_gluten, picante, sin_lactosa, de_dieta)"))
-(if (neq (length$ ?tipo-comida) 0)
+(bind ?tipo_comida (input-vector "Alguna preferencia alimenticia? Indicalo para que pueda ayudarte de la mejor forma posible (vegana, vegetariana, sin_gluten, picante, sin_lactosa, de_dieta)"))
+(if (neq (length$ ?tipo_comida) 0)
   then
-  (if (not (eq (nth$ 1 ?tipo-comida) -1))
+  (if (not (eq (nth$ 1 ?tipo_comida) -1))
     then
-    (foreach ?tipo ?tipo-comida
+    (foreach ?tipo ?tipo_comida
       (if (or (eq (str-compare ?tipo "vegana") 0) (eq (str-compare ?tipo "vegetariana") 0) 
               (eq (str-compare ?tipo "sin_gluten") 0) (eq (str-compare ?tipo "picante") 0) 
               (eq (str-compare ?tipo "sin_lactosa") 0) (eq (str-compare ?tipo "de_dieta") 0))
@@ -136,7 +136,7 @@
             )
             )
           )
-        ;(assert (tipo-comida ?tipo))
+        ;(assert (tipo_comida ?tipo))
         )
       )
     )
@@ -165,12 +165,12 @@
 (printout t "Que tipo de comida quieres? Algo para picotear o algo que te deje satisfecho cuando mas hambre pases?" crlf)
 (printout t "Indicalo para poder aconsejarte mejor (entrante, primer_plato, plato_principal, postre, desayuno_merienda, acompanamiento)" crlf)
 (printout t "Respuesta: ")
-(bind ?para-cuando (read))
-(if (and (not (eq ?para-cuando -1))  (or (eq (str-compare ?para-cuando "entrante") 0) (eq (str-compare ?para-cuando "primer_plato") 0) 
-                                  (eq (str-compare ?para-cuando "plato_principal") 0) (eq (str-compare ?para-cuando "postre") 0) 
-                                (eq (str-compare ?para-cuando "desayuno_merienda") 0) (eq (str-compare ?para-cuando "acompanamiento") 0)) )
+(bind ?momento (read))
+(if (and (not (eq ?momento -1))  (or (eq (str-compare ?momento "entrante") 0) (eq (str-compare ?momento "primer_plato") 0) 
+                                  (eq (str-compare ?momento "plato_principal") 0) (eq (str-compare ?momento "postre") 0) 
+                                (eq (str-compare ?momento "desayuno_merienda") 0) (eq (str-compare ?momento "acompanamiento") 0)) )
   then
-  (assert (para-cuando ?para-cuando))
+  (assert (para-cuando ?momento))
 )
 (printout t crlf)
 )
@@ -349,7 +349,7 @@
 (es_un_tipo_de merluza pescado)
 (es_un_tipo_de bacalao pescado)
 (es_un_tipo_de lubina pescado)
-(es_un_tipo_de atún pescado)
+(es_un_tipo_de atun pescado)
 (es_un_tipo_de sardina pescado)
 (es_un_tipo_de langostino marisco)
 (es_un_tipo_de gamba marisco)
@@ -370,9 +370,9 @@
 ;; Sustituye la subcadena por "" en la cadena y si el resultado es distinto de la cadena original,
 ;; entonces la subcadena esta dentro de la cadena
 (deffunction PROPIEDADES-RECETAS::palabra-esta-dentro (?subcadena ?cadena)
-(if (not(stringp ?subcadena))
-  then (return FALSE))
-(if (or(<= (str-length ?subcadena) 2) (numberp ?subcadena) (numberp ?cadena))
+;(if (not(stringp ?subcadena))
+;  then (return FALSE))
+(if (<= (str-length ?subcadena) 2) 
   then (return FALSE))
 (bind ?reemplazo (str-replace ?cadena ?subcadena ""))
 (if (neq ?reemplazo ?cadena)
@@ -384,34 +384,57 @@
 ;; Definir una función para dividir un string en palabras individuales
 (deffunction PROPIEDADES-RECETAS::dividir-string (?cadena)
 (bind ?palabras (explode$ ?cadena))
-(return ?palabras))
+(return $?palabras))
 
 ;; Definir una función para dividir una palabra en subpalabras
 (deffunction PROPIEDADES-RECETAS::dividir-palabra (?palabra)
 (bind ?palabra-separada (str-replace ?palabra "_" " "))
 (bind ?palabras (dividir-string ?palabra-separada))
-(return ?palabras)
+(return $?palabras)
 )
 
 ;; Definir una función que te indique si una palabra esta dentro de una lista de palabras 
 ;; Se usara la función palabra-esta-dentro
 ;; Devuelve una lista "resultado" con las palabras que estan dentro de la lista que se pasa como argumento
-(deffunction PROPIEDADES-RECETAS::palabra-esta-dentro-lista (?palabr ?lista)
-(bind ?resultado (create$))
-(bind ?palabra (str-cat ?palabr))
-(loop-for-count (?i (length$ ?lista))
-  (bind ?x (nth$ ?i ?lista))
-  ; Dividimos la palabras por si la palabra es compuesta
-  (bind ?palabras (dividir-palabra ?palabra))
-  ; Comprobamos si la palabra esta dentro de la lista de palabras
-  (loop-for-count (?j (length$ ?palabras))
-    (bind ?y (nth$ ?j ?palabras))
-    (if (palabra-esta-dentro ?y ?x)
-      ; Añadimos la palabra a la lista de resultados en la ultima posición
-      then (bind ?resultado (insert$ ?resultado (+ (length$ ?resultado) 1) ?x)))
+;(deffunction PROPIEDADES-RECETAS::palabra-esta-dentro-lista (?palabr ?lista)
+;(bind ?resultado (create$))
+;(bind ?palabra (str-cat ?palabr))
+;(loop-for-count (?i (length$ ?lista))
+;  (bind ?x (nth$ ?i ?lista))
+;  ; Dividimos la palabras por si la palabra es compuesta
+;  (bind ?palabras (dividir-palabra ?palabra))
+;  ; Comprobamos si la palabra esta dentro de la lista de palabras
+;  (loop-for-count (?j (length$ ?palabras))
+;    (bind ?y (nth$ ?j ?palabras))
+;    (if (palabra-esta-dentro ?y ?x)
+;      ; Añadimos la palabra a la lista de resultados en la ultima posición
+;      then (bind ?resultado (insert$ ?resultado (+ (length$ ?resultado) 1) ?x)))
+;  )
+;)
+;(return $?resultado)
+;)
+
+(deffunction PROPIEDADES-RECETAS::palabra-esta-dentro-lista (?palabra ?lista)
+  (bind ?resultado (create$))
+  (bind ?palabra (str-cat ?palabra)) ; Convertimos la palabra a string
+  ;; Dividimos la palabra por si la palabra es compuesta
+  (bind ?subpalabras (dividir-palabra ?palabra))
+  ;; Iteramos sobre la lista de palabras
+  (loop-for-count (?i (length$ ?lista))
+    (bind ?x (nth$ ?i ?lista))
+    ;; Comprobamos si alguna subpalabra está dentro de la lista de palabras
+    (loop-for-count (?j (length$ ?subpalabras))
+      (bind ?subpalabra (nth$ ?j ?subpalabras))
+      (if (palabra-esta-dentro ?subpalabra ?x)
+        then 
+          ;; Añadimos la palabra a la lista de resultados si no está ya presente
+          (if (not (member$ ?x ?resultado)) 
+            then (bind ?resultado (insert$ ?resultado 1 ?x))
+          )
+      )
+    )
   )
-)
-(return $?resultado)
+  (return $?resultado)
 )
 
 ;;; Pasamos el nombre de la receta a minusculas para poder comparar con los ingredientes relevantes
@@ -421,92 +444,92 @@
 (assert (nom_receta (lowcase ?x)))
 )
 
-;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
-;;; En este caso, comprueba si cada palabra del nombre de la receta esta dentro del nombre de los ingredientes relevantes
-(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_nombre_compuesto1
-(nom_receta_normal ?a)
-(nom_receta ?x)
-(receta (nombre ?a) (ingredientes $?ingredientes))
-=>
-(bind ?palabras (dividir-string ?x))
-;; Cogemos cada palabra del nombre y vemos si viene incluida en algun ingrediente que tenga nombre compuesto
-(loop-for-count (?i (length$ ?palabras))
-  (bind ?y (nth$ ?i ?palabras))
-  ; Comprobamos si el nombre de la receta contiene alguno de sus ingredientes
-  (bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
-  ; Si la longitud de la lista resultado es mayor que 0, entonces la palabra esta dentro de la lista de ingredientes
-  (if (> (length$ ?resultado) 0)
-    then
-    ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
-    (loop-for-count (?j (length$ ?resultado))
-      (bind ?z (nth$ ?j ?resultado))
-      (assert (propiedad_receta ingrediente_relevante ?a ?z))
-    )
-  )
-)
-)
-
-;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
-;;; En este caso, hacemos lo contrario, comprobamos si el nombre de los ingredientes esta dentro del nombre de la receta
-(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_nombre_compuesto2
-(nom_receta_normal ?a)
-(nom_receta ?x)
-(receta (nombre ?a) (ingredientes $?ingredientes))
-=>
-(bind ?palabras (dividir-string ?x))
-;; Cogemos cada palabra del nombre y vemos si viene incluida en algun ingrediente que tenga nombre compuesto
-(loop-for-count (?i (length$ ?ingredientes))
-  (bind ?y (nth$ ?i ?ingredientes))
-  ; Comprobamos si el nombre de la receta contiene alguno de sus ingredientes
-  (bind ?resultado (palabra-esta-dentro-lista ?y ?palabras))
-  ; Si la longitud de la lista resultado es mayor que 0, entonces la palabra esta dentro de la lista de ingredientes
-  (if (> (length$ ?resultado) 0)
-    then
-    ; Añadimos el ingrediente comprobado a la lista de ingredientes relevantes
-    (assert (propiedad_receta ingrediente_relevante ?a ?y))
-  )
-)
-)
-
-;;; Regla para deducir los ingredientes relevantes de una receta a partir de sus ingredientes haciendo uso de es_ingrediente
-(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_grupo
-(nom_receta_normal ?a)
-(nom_receta ?x)
-(receta (nombre ?a) (ingredientes $?ingredientes))
-(es_ingrediente ?y)
-=>
-; Comprobamos si alguno de los ingredientes de es_ingrediente esta dentro de la lista de ingredientes de la receta
-(bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
-; Si la longitud de la lista resultado es mayor que 0, entonces el ingrediente esta dentro de la lista de ingredientes
-(if (> (length$ ?resultado) 0)
-  then
-  ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
-  (loop-for-count (?j (length$ ?resultado))
-    (bind ?z (nth$ ?j ?resultado))
-    (assert (propiedad_receta ingrediente_relevante ?a ?z))
-  )
-)
-)
-
-;;; Regla para deducir los ingredientes relevantes de una receta a partir de sus ingredientes haciendo uso de es_un_tipo_de
-(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_tipos
-(nom_receta_normal ?a)
-(nom_receta ?x)
-(receta (nombre ?a) (ingredientes $?ingredientes))
-(es_un_tipo_de ?y ?)
-=>
-; Comprobamos si alguno de los ingredientes de es_un_tipo_de esta dentro de la lista de ingredientes de la receta
-(bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
-; Si la longitud de la lista resultado es mayor que 0, entonces el ingrediente esta dentro de la lista de ingredientes
-(if (> (length$ ?resultado) 0)
-  then
-  ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
-  (loop-for-count (?j (length$ ?resultado))
-    (bind ?z (nth$ ?j ?resultado))
-    (assert (propiedad_receta ingrediente_relevante ?a ?z))
-  )
-)
-)
+;;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
+;;;; En este caso, comprueba si cada palabra del nombre de la receta esta dentro del nombre de los ingredientes relevantes
+;(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_nombre_compuesto1
+;(nom_receta_normal ?a)
+;(nom_receta ?x)
+;(receta (nombre ?a) (ingredientes $?ingredientes))
+;=>
+;(bind ?palabras (dividir-string ?x))
+;;; Cogemos cada palabra del nombre y vemos si viene incluida en algun ingrediente que tenga nombre compuesto
+;(loop-for-count (?i (length$ ?palabras))
+;  (bind ?y (nth$ ?i ?palabras))
+;  ; Comprobamos si el nombre de la receta contiene alguno de sus ingredientes
+;  (bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
+;  ; Si la longitud de la lista resultado es mayor que 0, entonces la palabra esta dentro de la lista de ingredientes
+;  (if (> (length$ ?resultado) 0)
+;    then
+;    ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
+;    (loop-for-count (?j (length$ ?resultado))
+;      (bind ?z (nth$ ?j ?resultado))
+;      (assert (propiedad_receta ingrediente_relevante ?a ?z))
+;    )
+;  )
+;)
+;)
+;
+;;;; Regla para deducir los ingredientes relevantes de una receta a partir de su nombre
+;;;; En este caso, hacemos lo contrario, comprobamos si el nombre de los ingredientes esta dentro del nombre de la receta
+;(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_nombre_compuesto2
+;(nom_receta_normal ?a)
+;(nom_receta ?x)
+;(receta (nombre ?a) (ingredientes $?ingredientes))
+;=>
+;(bind ?palabras (dividir-string ?x))
+;;; Cogemos cada palabra del nombre y vemos si viene incluida en algun ingrediente que tenga nombre compuesto
+;(loop-for-count (?i (length$ ?ingredientes))
+;  (bind ?y (nth$ ?i ?ingredientes))
+;  ; Comprobamos si el nombre de la receta contiene alguno de sus ingredientes
+;  (bind ?resultado (palabra-esta-dentro-lista ?y ?palabras))
+;  ; Si la longitud de la lista resultado es mayor que 0, entonces la palabra esta dentro de la lista de ingredientes
+;  (if (> (length$ ?resultado) 0)
+;    then
+;    ; Añadimos el ingrediente comprobado a la lista de ingredientes relevantes
+;    (assert (propiedad_receta ingrediente_relevante ?a ?y))
+;  )
+;)
+;)
+;
+;;;; Regla para deducir los ingredientes relevantes de una receta a partir de sus ingredientes haciendo uso de es_ingrediente
+;(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_grupo
+;(nom_receta_normal ?a)
+;(nom_receta ?x)
+;(receta (nombre ?a) (ingredientes $?ingredientes))
+;(es_ingrediente ?y)
+;=>
+;; Comprobamos si alguno de los ingredientes de es_ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
+;; Si la longitud de la lista resultado es mayor que 0, entonces el ingrediente esta dentro de la lista de ingredientes
+;(if (> (length$ ?resultado) 0)
+;  then
+;  ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
+;  (loop-for-count (?j (length$ ?resultado))
+;    (bind ?z (nth$ ?j ?resultado))
+;    (assert (propiedad_receta ingrediente_relevante ?a ?z))
+;  )
+;)
+;)
+;
+;;;; Regla para deducir los ingredientes relevantes de una receta a partir de sus ingredientes haciendo uso de es_un_tipo_de
+;(defrule PROPIEDADES-RECETAS::deducir_ingredientes_relevantes_tipos
+;(nom_receta_normal ?a)
+;(nom_receta ?x)
+;(receta (nombre ?a) (ingredientes $?ingredientes))
+;(es_un_tipo_de ?y ?)
+;=>
+;; Comprobamos si alguno de los ingredientes de es_un_tipo_de esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado (palabra-esta-dentro-lista ?y ?ingredientes))
+;; Si la longitud de la lista resultado es mayor que 0, entonces el ingrediente esta dentro de la lista de ingredientes
+;(if (> (length$ ?resultado) 0)
+;  then
+;  ; Añadimos los ingredientes de la lista resultado a la lista de ingredientes relevantes
+;  (loop-for-count (?j (length$ ?resultado))
+;    (bind ?z (nth$ ?j ?resultado))
+;    (assert (propiedad_receta ingrediente_relevante ?a ?z))
+;  )
+;)
+;)
 
 ;;;Añadir reglas para deducir el tipo de plato asociado a una receta
 
@@ -515,29 +538,32 @@
 ; Considerare que primer_plato y plato_principal son lo mismo
 (defrule PROPIEDADES-RECETAS::deducir_tipo_plato_primer_plato
 (nom_receta_normal ?nombre)
-(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes) (duracion ?tiempo))
+(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes) (duracion ?tiempo) (tipo_plato $?tipo))
 (es_un_tipo_de ?tipo1 carne)
 (es_un_tipo_de ?tipo2 pasta)
 (es_un_tipo_de ?tipo3 marisco)
 =>
-(bind ?t (convertir-a-minutos ?tiempo))
-; Comprobamos que la carne, pasta o marisco esten en la lista de ingredientes (y sus derivados)
-(bind ?resultado1 (palabra-esta-dentro-lista carne ?ingredientes))
-(bind ?resultado2 (palabra-esta-dentro-lista pasta ?ingredientes))
-(bind ?resultado3 (palabra-esta-dentro-lista marisco ?ingredientes))
-(bind ?resultado4 (palabra-esta-dentro-lista ?tipo1 ?ingredientes))
-(bind ?resultado5 (palabra-esta-dentro-lista ?tipo2 ?ingredientes))
-(bind ?resultado6 (palabra-esta-dentro-lista ?tipo3 ?ingredientes))
-(bind ?resultado7 (palabra-esta-dentro-lista lentejas ?ingredientes))
-; Si se encuentran y se cumple la condición de tiempo, se asocia a primer plato o plato principal
-(if (and (<= ?t 90) 
-    (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0) (> (length$ ?resultado3) 0)
-    (> (length$ ?resultado4) 0) (> (length$ ?resultado5) 0) (> (length$ ?resultado6) 0)
-    (> (length$ ?resultado7) 0)
-    ))
-    then
-    (assert (plato-asociado ?nombre primer_plato))
-    (assert (plato-asociado ?nombre plato_principal))
+(if (= (length$ ?tipo) 0)
+  then
+  (bind ?t (convertir-a-minutos ?tiempo))
+  ; Comprobamos que la carne, pasta o marisco esten en la lista de ingredientes (y sus derivados)
+  (bind ?resultado1 (palabra-esta-dentro-lista carne ?ingredientes))
+  (bind ?resultado2 (palabra-esta-dentro-lista pasta ?ingredientes))
+  (bind ?resultado3 (palabra-esta-dentro-lista marisco ?ingredientes))
+  (bind ?resultado4 (palabra-esta-dentro-lista ?tipo1 ?ingredientes))
+  (bind ?resultado5 (palabra-esta-dentro-lista ?tipo2 ?ingredientes))
+  (bind ?resultado6 (palabra-esta-dentro-lista ?tipo3 ?ingredientes))
+  (bind ?resultado7 (palabra-esta-dentro-lista lentejas ?ingredientes))
+  ; Si se encuentran y se cumple la condición de tiempo, se asocia a primer plato o plato principal
+  (if (and (<= ?t 90) 
+      (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0) (> (length$ ?resultado3) 0)
+      (> (length$ ?resultado4) 0) (> (length$ ?resultado5) 0) (> (length$ ?resultado6) 0)
+      (> (length$ ?resultado7) 0)
+      ))
+      then
+      (assert (plato-asociado ?nombre primer_plato))
+      (assert (plato-asociado ?nombre plato_principal))
+  )
 )
 )
 
@@ -545,15 +571,18 @@
 ; Considerare que postre y desayuno/merienda son lo mismo
 (defrule PROPIEDADES-RECETAS::deducir_tipo_plato_postre_desayuno_merienda
 (nom_receta_normal ?nombre)
-(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes))
+(receta (nombre ?nombre) (numero_personas ?personas) (ingredientes $?ingredientes) (tipo_plato $?tipo))
 =>
-; Comprobamos que azucar o chocolate esten en la lista de ingredientes
-(bind ?resultado1 (palabra-esta-dentro-lista azucar ?ingredientes))
-(bind ?resultado2 (palabra-esta-dentro-lista chocolate ?ingredientes))
-(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
-    then
-    (assert (plato-asociado ?nombre postre))
-    (assert (plato-asociado ?nombre desayuno_merienda))
+(if (= (length$ ?tipo) 0)
+  then
+  ; Comprobamos que azucar o chocolate esten en la lista de ingredientes
+  (bind ?resultado1 (palabra-esta-dentro-lista azucar ?ingredientes))
+  (bind ?resultado2 (palabra-esta-dentro-lista chocolate ?ingredientes))
+  (if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+      then
+      (assert (plato-asociado ?nombre postre))
+      (assert (plato-asociado ?nombre desayuno_merienda))
+  )
 )
 )
 
@@ -570,13 +599,30 @@
 (not (plato-asociado ?nombre desayuno_merienda))
 =>
 ;(if 
-;(assert (plato-asociado ?nombre entrante))
-;(assert (plato-asociado ?nombre acompanamiento))
+(if (= (length$ ?tipo) 0)
+  then
+  (assert (plato-asociado ?nombre entrante))
+  (assert (plato-asociado ?nombre acompanamiento))
+)
 ;)
 ; Por fallo en esta funcion, asignar los tipos de plato originales
-(loop-for-count (?i (length$ ?tipo))
-  (bind ?t (nth$ ?i ?tipo))
-  (assert (plato-asociado ?nombre ?t))
+;(loop-for-count (?i (length$ ?tipo))
+;  (bind ?t (nth$ ?i ?tipo))
+;  (assert (plato-asociado ?nombre ?t))
+;)
+)
+
+;;; Regla para incluir el tipo de plato en la receta
+(defrule PROPIEDADES-RECETAS::incluir_tipo_plato
+(nom_receta_normal ?nombre)
+(receta (nombre ?nombre) (tipo_plato $?tipo))
+=>
+(if (> (length$ ?tipo) 0)
+  then
+  (loop-for-count (?i (length$ ?tipo))
+    (bind ?t (nth$ ?i ?tipo))
+    (assert (plato-asociado ?nombre ?t))
+  )
 )
 )
 
@@ -668,43 +714,132 @@
 )
 
 ;;; Regla para deducir si una receta es vegana
-(defrule PROPIEDADES-RECETAS::deducir_vegana_grupo
+;(defrule PROPIEDADES-RECETAS::deducir_vegana_grupo
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente no es vegano
+;?ret_vegana <- (propiedad_receta es_vegana ?nombre)
+;; Filtramos los ingredientes que no son veganos
+;(es_no_vegano ?i1)
+;=>
+;; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
+;(if (> (length$ ?resultado1) 0) 
+;  then (retract ?ret_vegana)
+;)
+;)
+
+;;; Regla para deducir si una receta es vegana
+;(defrule PROPIEDADES-RECETAS::deducir_vegana
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Filtramos los ingredientes que no son veganos
+;(es_no_vegano ?i1)
+;(es_un_tipo_de ?i2 ?i1)
+;;?a_retractar <- (propiedad_receta es_vegana ?nombre)
+;=>
+;; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
+;(if (and (= (length$ ?resultado1) 0) (= (length$ ?resultado2) 0))
+;  then (assert (propiedad_receta es_vegana ?nombre))
+;  ;else (retract ?a_retractar)
+;)
+;)
+
+;;; Regla para deducir si una receta es vegana
+(defrule PROPIEDADES-RECETAS::retractar_vegana_tipo
 (nom_receta_normal ?nombre)
 (receta (nombre ?nombre) (ingredientes $?ingredientes))
-; Hecho a retractar si el ingrediente no es vegano
-?ret_vegana <- (propiedad_receta es_vegana ?nombre)
 ; Filtramos los ingredientes que no son veganos
 (es_no_vegano ?i1)
+(es_un_tipo_de ?i2 ?i1)
+?a_retractar <- (propiedad_receta es_vegana ?nombre)
+=>
+; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
+(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
+(if  (> (length$ ?resultado2) 0)
+  then (retract ?a_retractar) 
+  ;else (retract ?a_retractar)
+)
+)
+
+(defrule PROPIEDADES-RECETAS::retractar_vegana_grupo
+(nom_receta_normal ?nombre)
+(receta (nombre ?nombre) (ingredientes $?ingredientes))
+; Filtramos los ingredientes que no son veganos
+(es_no_vegano ?i1)
+?a_retractar <- (propiedad_receta es_vegana ?nombre)
 =>
 ; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
 (bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
 ; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
-(if (> (length$ ?resultado1) 0) 
-  then (retract ?ret_vegana)
+(if (> (length$ ?resultado1) 0)
+  then (retract ?a_retractar) 
+  ;else (retract ?a_retractar)
 )
 )
+
+;;; Regla para retractar si se ha decidido que una receta es vegana y se encuentra un ingrediente no vegano
+;(defrule PROPIEDADES-RECETAS::retracto_vegana_grupo
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Filtramos los ingredientes que no son veganos
+;(es_no_vegano ?i1)
+;(es_un_tipo_de ?i2 ?i1)
+;?a_retractar <- (propiedad_receta es_vegana ?nombre)
+;=>
+;; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
+;(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+;  then (retract ?a_retractar)
+;)
+;)
 
 ;;; Regla para deducir si una receta es vegana
-(defrule PROPIEDADES-RECETAS::deducir_vegana_grupo_tipo
-(nom_receta_normal ?nombre)
-(receta (nombre ?nombre) (ingredientes $?ingredientes))
-; Hecho a retractar si el ingrediente no es vegano
-?ret_vegana <- (propiedad_receta es_vegana ?nombre)
-; Filtramos los ingredientes que no son veganos
-(es_no_vegano ?i1)
-; Filtramos los subtipos de los ingredientes que no son veganos
-(es_un_tipo_de ?i2 ?i1)
-=>
-; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
-(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
-; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
-(if (> (length$ ?resultado2) 0)
-  then (retract ?ret_vegana)
-)
-)
+;(defrule PROPIEDADES-RECETAS::deducir_vegana_grupo_tipo
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente no es vegano
+;?ret_vegana <- (propiedad_receta es_vegana ?nombre)
+;; Filtramos los ingredientes que no son veganos
+;(es_no_vegano ?i1)
+;; Filtramos los subtipos de los ingredientes que no son veganos
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegana
+;(if (> (length$ ?resultado2) 0)
+;  then (retract ?ret_vegana)
+;)
+;)
 
-;;; Regla para deducir si una receta es vegetariana
-(defrule PROPIEDADES-RECETAS::deducir_vegetariana_grupo
+;;;; Regla para deducir si una receta es vegetariana
+;(defrule PROPIEDADES-RECETAS::deducir_vegetariana_grupo
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente no es vegetariano
+;?ret_vegetariana <- (propiedad_receta es_vegetariana ?nombre)
+;; Filtramos los ingredientes que no son vegetarianos
+;(es_no_vegetariano ?i1)
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es vegetariana
+;(if (or (= (length$ ?resultado1) 0) (= (length$ ?resultado2) 0))
+;  then (assert ?ret_vegetariana)
+;)
+;)
+
+(defrule PROPIEDADES-RECETAS::retractar_vegetariana_grupo
 (nom_receta_normal ?nombre)
 (receta (nombre ?nombre) (ingredientes $?ingredientes))
 ; Hecho a retractar si el ingrediente no es vegetariano
@@ -775,6 +910,25 @@
 )
 )
 
+;(defrule PROPIEDADES-RECETAS::retractar_de_dieta
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente no es de dieta
+;?ret_dieta <- (propiedad_receta es_de_dieta ?nombre)
+;; Filtramos los ingredientes que no son de dieta
+;(es_no_de_dieta ?i1)
+;; Filtramos los subtipos de los ingredientes que no son de dieta
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es de dieta
+;(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+;  then (retract ?ret_dieta)
+;)
+;)
+
 ;;; Regla para deducir si una receta es picante
 (defrule PROPIEDADES-RECETAS::deducir_picante_grupo
 (nom_receta_normal ?nombre)
@@ -807,7 +961,24 @@
 )
 )
 
-;;; Regla para deducir si una receta es sin gluten
+;(defrule PROPIEDADES-RECETAS::deducir_picante
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Filtramos los ingredientes picantes
+;(es_picante ?i1)
+;; Filtramos los subtipos de los ingredientes picantes
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta es picante
+;(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+;  then (assert (propiedad_receta es_picante ?nombre))
+;)
+;)
+
+;;;; Regla para deducir si una receta es sin gluten
 (defrule PROPIEDADES-RECETAS::deducir_sin_gluten_grupo
 (nom_receta_normal ?nombre)
 (receta (nombre ?nombre) (ingredientes $?ingredientes))
@@ -842,6 +1013,25 @@
   then (retract ?ret_gluten)
 )
 )
+
+;(defrule PROPIEDADES-RECETAS::retractar_sin_gluten
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente contiene gluten
+;?ret_gluten <- (propiedad_receta es_sin_gluten ?nombre)
+;; Filtramos los ingredientes con gluten
+;(es_con_gluten ?i1)
+;; Filtramos los subtipos de los ingredientes con gluten
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es sin gluten
+;(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+;  then (retract ?ret_gluten)
+;)
+;)
 
 ;;; Regla para deducir si una receta es sin lactosa
 (defrule PROPIEDADES-RECETAS::deducir_sin_lactosa_grupo
@@ -879,6 +1069,25 @@
 )
 )
 
+;(defrule PROPIEDADES-RECETAS::retractar_sin_lactosa
+;(nom_receta_normal ?nombre)
+;(receta (nombre ?nombre) (ingredientes $?ingredientes))
+;; Hecho a retractar si el ingrediente contiene lactosa
+;?ret_lactosa <- (propiedad_receta es_sin_lactosa ?nombre)
+;; Filtramos los ingredientes con lactosa
+;(es_con_lactosa ?i1)
+;; Filtramos los subtipos de los ingredientes con lactosa
+;(es_un_tipo_de ?i2 ?i1)
+;=>
+;; Vemos si el subtipo del ingrediente esta dentro de la lista de ingredientes de la receta
+;(bind ?resultado1 (palabra-esta-dentro-lista ?i1 ?ingredientes))
+;(bind ?resultado2 (palabra-esta-dentro-lista ?i2 ?ingredientes))
+;; En caso de que el ingrediente o su subtipo esten en la lista de ingredientes, la receta no es sin lactosa
+;(if (or (> (length$ ?resultado1) 0) (> (length$ ?resultado2) 0))
+;  then (retract ?ret_lactosa)
+;)
+;)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -901,7 +1110,7 @@
 (deffunction RECETAS-COMPATIBLES::palabra-esta-dentro (?subcadena ?cadena)
 ;(if (not(stringp ?subcadena))
 ;  then (return FALSE))
-(if (or(<= (str-length ?subcadena) 2) (numberp ?subcadena) (numberp ?cadena))
+(if (<= (str-length ?subcadena) 2) 
   then (return FALSE))
 (bind ?reemplazo (str-replace ?cadena ?subcadena ""))
 (if (neq ?reemplazo ?cadena)
@@ -909,43 +1118,44 @@
   else (return FALSE))
 )
 
+
 ;; Definir una función para dividir un string en palabras individuales
 (deffunction RECETAS-COMPATIBLES::dividir-string (?cadena)
-(if (stringp ?cadena)
-  then
-  (bind ?palabras (explode$ ?cadena))
-  else
-  (bind ?palabras (create$ ?cadena))
-)
-(return ?palabras)
-)
+(bind ?cadena (str-cat ?cadena))
+(bind ?palabras (explode$ ?cadena))
+(return $?palabras))
 
 ;; Definir una función para dividir una palabra en subpalabras
 (deffunction RECETAS-COMPATIBLES::dividir-palabra (?palabra)
 (bind ?palabra-separada (str-replace ?palabra "_" " "))
 (bind ?palabras (dividir-string ?palabra-separada))
-(return ?palabras)
+(return $?palabras)
 )
 
 ;; Definir una función que te indique si una palabra esta dentro de una lista de palabras 
 ;; Se usara la función palabra-esta-dentro
 ;; Devuelve una lista "resultado" con las palabras que estan dentro de la lista que se pasa como argumento
-(deffunction RECETAS-COMPATIBLES::palabra-esta-dentro-lista (?palabr ?lista)
-(bind ?resultado (create$))
-(bind ?palabra (str-cat ?palabr))
-(loop-for-count (?i (length$ ?lista))
-  (bind ?x (nth$ ?i ?lista))
-  ; Dividimos la palabras por si la palabra es compuesta
-  (bind ?palabras (dividir-palabra ?palabra))
-  ; Comprobamos si la palabra esta dentro de la lista de palabras
-  (loop-for-count (?j (length$ ?palabras))
-    (bind ?y (nth$ ?j ?palabras))
-    (if (palabra-esta-dentro ?y ?x)
-      ; Añadimos la palabra a la lista de resultados en la ultima posición
-      then (bind ?resultado (insert$ ?resultado (+ (length$ ?resultado) 1) ?x)))
+(deffunction RECETAS-COMPATIBLES::palabra-esta-dentro-lista (?palabra ?lista)
+  (bind ?resultado (create$))
+  (bind ?palabra (str-cat ?palabra)) ; Convertimos la palabra a string
+  ;; Dividimos la palabra por si la palabra es compuesta
+  (bind ?subpalabras (dividir-palabra ?palabra))
+  ;; Iteramos sobre la lista de palabras
+  (loop-for-count (?i (length$ ?lista))
+    (bind ?x (nth$ ?i ?lista))
+    ;; Comprobamos si alguna subpalabra está dentro de la lista de palabras
+    (loop-for-count (?j (length$ ?subpalabras))
+      (bind ?subpalabra (nth$ ?j ?subpalabras))
+      (if (palabra-esta-dentro ?subpalabra ?x)
+        then 
+          ;; Añadimos la palabra a la lista de resultados si no está ya presente
+          (if (not (member$ ?x ?resultado)) 
+            then (bind ?resultado (insert$ ?resultado 1 ?x))
+          )
+      )
+    )
   )
-)
-(return $?resultado)
+  (return $?resultado)
 )
 
 ;;; Regla para deducir las posibles recetas compatibles para luego filtrarlas
@@ -955,37 +1165,54 @@
 ;(assert (posible_receta_compatible ?receta))
 ;)
 
-(defrule RECETAS-COMPATIBLES::filtrar_recetas
-(tipo-comida ?tipo)
-(propiedad_receta ?tipo ?receta)
-=>
-(assert (posible_receta_compatible ?receta))
-)
+;(defrule RECETAS-COMPATIBLES::filtrar_recetas
+;(tipo_comida ?tipo)
+;(propiedad_receta ?tipo ?receta)
+;=>
+;(assert (posible_receta_compatible ?receta))
+;)
+
+;(defrule RECETAS-COMPATIBLES::comprobar-para-cuando
+;(para-cuando ?momento)
+;(tipo_comida ?tipo)
+;=>
+;(printout t "Para cuando: " ?momento crlf)
+;(printout t "Tipo de comida: " ?tipo crlf)
+;)
 
 ;;; Filtrar las recetas segun el tipo de plato
 (defrule RECETAS-COMPATIBLES::filtrar_recetas_tipo_plato
-(para-cuando ?tipo)
-(plato-asociado ?receta ?tipo)
+(not (tipo_comida ?))
+(para-cuando ?momento)
+(plato-asociado ?receta ?momento)
 =>
 (assert (posible_receta_compatible ?receta))
 )
 
 ;;; Filtrar las recetas segun las propiedades indicadas por el usuario
 ; Si la receta no contiene alguno de los tipos de comida indicados por el usuario, se elimina
+;(defrule RECETAS-COMPATIBLES::filtrar_recetas1
+;(tipo_comida ?tipo)
+;(not(propiedad_receta ?tipo ?receta))
+;?borrar <- (posible_receta_compatible ?receta)
+;=>
+;(retract ?borrar)
+;)
+
 (defrule RECETAS-COMPATIBLES::filtrar_recetas1
-(tipo-comida ?tipo)
-(not(propiedad_receta ?tipo ?receta))
-?borrar <- (posible_receta_compatible ?receta)
+(not (para-cuando ?))
+(tipo_comida ?tipo)
+(propiedad_receta ?tipo ?receta)
 =>
-(retract ?borrar)
+(assert (posible_receta_compatible ?receta))
 )
 
 ; Si la receta contiene algun tipo de comida que no ha sido indicado por el usuario, se elimina
 ;; CREO QUE ESTA REGLA NO ES NECESARIA
 ;(defrule RECETAS-COMPATIBLES::filtrar_recetas2
-;(tipo-comida ?tipo) ; Que entre solo si existe alguna propiedad indicada por el usuario
+;(tipo_comida ?tipo) ; Que entre solo si existe alguna propiedad indicada por el usuario
 ;(propiedad_receta ?propiedad ?receta)
-;(not(tipo-comida ?propiedad))
+;(not(tipo_comida ?propiedad))
 ;?borrar <- (posible_receta_compatible ?receta)
 ;=>
 ;(retract ?borrar)
@@ -1001,29 +1228,50 @@
 ;)
 
 ; Si el tipo de plato introducido por el usuario no coincide con ninguno de los tipos de plato de la receta, se elimina
-(defrule RECETAS-COMPATIBLES::filtrar_recetas_tipo_plato2
-(para-cuando ?tipo)
-(not(plato-asociado ?receta ?tipo))
-?borrar <- (posible_receta_compatible ?receta)
-=>
-(retract ?borrar)
-)
+;(defrule RECETAS-COMPATIBLES::filtrar_recetas_tipo_plato2
+;(para-cuando ?tipo)
+;(not(plato-asociado ?receta ?tipo))
+;?borrar <- (posible_receta_compatible ?receta)
+;=>
+;(retract ?borrar)
+;)
 
 ;;; Si no se ha indicado ninguna propiedad, todas las recetas seran compatibles
+;(defrule RECETAS-COMPATIBLES::todas_las_recetas_compatibles_tipo
+;(not(tipo_comida ?))
+;(propiedad_receta ?propiedad ?receta)
+;=>
+;(assert (posible_receta_compatible ?receta))
+;)
+
 (defrule RECETAS-COMPATIBLES::todas_las_recetas_compatibles_tipo
-(not(tipo-comida ?))
-(propiedad_receta ?propiedad ?receta)
+(tipo_comida ?tipo)
+(para-cuando ?momento)
+(plato-asociado ?receta ?momento)
+(propiedad_receta ?tipo ?receta)
 =>
+;(printout t "Receta compatible: " crlf)
+(assert (posible_receta_compatible ?receta))
+)
+
+;(plato-asociado ?receta ?tipo)
+
+(defrule RECETAS-COMPATIBLES::todas_las_recetas_compatibles_tipo2
+(not(tipo_comida ?tipo))
+(not(para-cuando ?))
+(plato-asociado ?receta ?)
+=>
+;(printout t "Receta compatible: " crlf)
 (assert (posible_receta_compatible ?receta))
 )
 
 ;;; Si no se ha indicado ningun tipo de plato, todas las recetas seran compatibles
-(defrule RECETAS-COMPATIBLES::todas_las_recetas_compatibles_tipo_plato
-(not(para-cuando ?))
-(plato-asociado ?receta ?tipo)
-=>
-(assert (posible_receta_compatible ?receta))
-)
+;(defrule RECETAS-COMPATIBLES::todas_las_recetas_compatibles_tipo_plato
+;(not(para-cuando ?))
+;(plato-asociado ?receta ?tipo)
+;=>
+;(assert (posible_receta_compatible ?receta))
+;)
 
 ;;; Filtrar las recetas, quedarse con las que tengan los ingredientes indicados por el usuario
 
@@ -1180,19 +1428,19 @@
 =>
 (if (= ?*num_recetas* 1)
   then
-  ;(printout t crlf "Las propiedades de la receta son: ")
+  (printout t crlf "Las propiedades de la receta son: ")
 )
 )
 
 ;;; Mostrar las propiedades de la receta recomendada si solo hay una receta compatible
 (defrule PROPONER-RECETAS::mostrar_justificacion1_4
-(declare (salience -1000))
+(declare (salience -1001))
 (receta_compatible ?receta)
 (propiedad_receta ?propiedad ?receta)
 =>
 (if (= ?*num_recetas* 1)
   then
-  ;(printout t "-" ?propiedad " ")
+  (printout t "-" ?propiedad " ")
 )
 )
 
@@ -1334,7 +1582,7 @@
 =>
 (if (> ?*num_recetas* 1)
   then
-  ;(printout t crlf "Las propiedades de la receta son: ")
+  (printout t crlf "Las propiedades de la receta son: ")
 )
 )
 
@@ -1346,7 +1594,7 @@
 =>
 (if (> ?*num_recetas* 1)
   then
-  ;(printout t "-" ?propiedad " ")
+  (printout t "-" ?propiedad " ")
 )
 )
 
@@ -1404,7 +1652,7 @@
 =>
 (if (> ?*num_recetas* 1)
   then
-  ;(printout t crlf "Las propiedades de la receta son: ")
+  (printout t crlf "Las propiedades de la receta son: ")
 )
 )
 
@@ -1416,7 +1664,7 @@
 =>
 (if (> ?*num_recetas* 1)
   then
-  ;(printout t "-" ?propiedad " ")
+  (printout t "-" ?propiedad " ")
 )
 )
 
